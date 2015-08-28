@@ -256,11 +256,11 @@ public abstract class AbstractCsvBeanTemplate<T, O extends AbstractCsvBeanTempla
 	 * @return 変換された項目値
 	 */
 	public Object stringToObject(final Field field, final String value) {
+		if (value == null || value.isEmpty()) {
+			return null;
+		}
 		final Format format = valueParserMapping.get(field.getName());
 		if (format != null) {
-			if (value == null || value.isEmpty()) {
-				return null;
-			}
 			try {
 				return format.parseObject(value);
 			} catch (final ParseException e) {

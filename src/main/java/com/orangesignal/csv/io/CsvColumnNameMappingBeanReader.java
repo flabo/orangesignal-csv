@@ -241,7 +241,7 @@ public class CsvColumnNameMappingBeanReader<T> implements Closeable {
 			Object o = null;
 			if (count == 1) {
 				final int pos = columnNames.indexOf(columns[0]);
-				if (pos != -1) {
+				if (pos != -1 && values.size() > pos) {
 					o = template.stringToObject(f, values.get(pos));
 				}
 			} else if (count > 1) {

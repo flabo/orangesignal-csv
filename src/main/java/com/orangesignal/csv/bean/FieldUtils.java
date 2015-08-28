@@ -18,6 +18,7 @@ package com.orangesignal.csv.bean;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Java プログラム要素のフィールド操作に関するユーティリティを提供します。
@@ -47,11 +48,18 @@ public abstract class FieldUtils {
 	 * @throws SecurityException 
 	 */
 	public static final Field getField(final Class<?> type, final String name) throws IOException {
-		try {
-			return type.getDeclaredField(name);
-		} catch (final NoSuchFieldException e) {
-			throw new IOException("Field " + name + " not found in " + type.getName() + ": " + e.getMessage(), e);
-		}
+        Class<?> currentClass = type;
+        while (currentClass != null) {
+			try {
+				return currentClass.getDeclaredField(name);
+			} catch (NoSuchFieldException e) {
+				currentClass = currentClass.getSuperclass();
+			} catch (SecurityException e) {
+//				e.printStackTrace();
+				currentClass = currentClass.getSuperclass();
+			}
+        }
+		throw new IOException("Field " + name + " not found in " + type.getName());
 	}
 
 	/**
@@ -94,12 +102,29 @@ public abstract class FieldUtils {
 			field.setAccessible(true);
 		}
 		try {
-			return field.get(bean);
+			return bean.getClass().getMethod("get"+capitalize(field.getName())).invoke(bean);
+		} catch (final InvocationTargetException e) {
+			throw new IOException("Cannot get " + field.getName() + ": " + e.getMessage(), e);
+		} catch (final NoSuchMethodException e) {
+			throw new IOException("Cannot get " + field.getName() + ": " + e.getMessage(), e);
+		} catch (final SecurityException e) {
+			throw new IOException("Cannot get " + field.getName() + ": " + e.getMessage(), e);
 		} catch (final IllegalAccessException e) {
 			throw new IOException("Cannot get " + field.getName() + ": " + e.getMessage(), e);
 		} catch (final IllegalArgumentException e) {
 			throw new IOException("Cannot get " + field.getName() + ": " + e.getMessage(), e);
 		}
 	}
+
+    private static String capitalize(String str) {
+        int strLen;
+        if (str == null || (strLen = str.length()) == 0) {
+            return str;
+        }
+        return new StringBuilder(strLen)
+            .append(Character.toTitleCase(str.charAt(0)))
+            .append(str.substring(1))
+            .toString();
+    }
 
 }
